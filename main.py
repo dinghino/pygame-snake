@@ -6,7 +6,7 @@ import random
 
 # colors definition
 WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
+BLACK = (30, 30, 30)
 RED = (255, 0, 0)
 GREEN = (0, 155, 0)
 BLUE = (0, 0, 255)
@@ -283,6 +283,9 @@ class Game():
         self.snakeSize = snakeSize
         self.appleSize = appleSize
 
+        self.background_color = BLACK
+        self.foreground_color = WHITE
+
         self.init()
 
     def init(self):
@@ -325,7 +328,7 @@ class Game():
         return txt
 
     def textCentered(self, message, color=WHITE, y_displace=0, size='small'):
-        '''Print a message on the screen to interact with the player. '''
+        '''Print a message on thBe screen to interact with the player. '''
         txt = self.getText(message, color, size)
         # get the wrapping rectangle for the text
         txtRect = txt.get_rect()
@@ -396,8 +399,8 @@ class Game():
     def gameLoop(self):
         '''Game loop that runs while gameOver and gameExit are False. '''
 
-        # reset the game view to BLACK
-        self.game.fill(BLACK)
+        # reset the game view to the background color
+        self.game.fill(self.background_color)
         # check for events
         self.userEvents()
         self.gameEvents()
@@ -430,7 +433,7 @@ class Game():
 
     def gameOverLoop(self):
         '''Game Over loop that runs when self.gameOver is True. '''
-        self.game.fill(BLACK)
+        self.game.fill(self.background_color)
         self.textCentered('GAME OVER!', RED, -50, 'large')
         self.textCentered('Your score %s' % self.appleEaten, GREEN, 10)
         self.textCentered('[C]ontinue or [Q]uit', y_displace=50, size='medium')
