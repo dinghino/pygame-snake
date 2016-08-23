@@ -418,7 +418,9 @@ class Game():
 
     def gameOverLoop(self):
         '''Game Over loop that runs when self.gameOver is True. '''
-        self.textCentered('GAME OVER!', RED, -50)
+        self.game.fill(BLACK)
+        self.textCentered('GAME OVER!', RED, y_displace=-50)
+        self.textCentered('Your score %s' % self.appleEaten, GREEN)
         self.textCentered('[C]ontinue or [Q]uit', y_displace=50)
         pygame.display.update()
 
