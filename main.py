@@ -312,13 +312,13 @@ class Game():
         self.apple.create()
         self.initialized = True
 
-    def textCentered(self, message, color):
+    def textCentered(self, message, color=WHITE, y_displace=0):
         '''Print a message on the screen to interact with the player. '''
         txt = self.font.render(message, True, color)
         # get the wrapping rectangle for the text
         txtRect = txt.get_rect()
         # center the text container in the window
-        txtRect.center = (self.width / 2), (self.height / 2)
+        txtRect.center = (self.width / 2), (self.height / 2) + y_displace
 
         # render the text
         self.game.blit(txt, txtRect)
@@ -418,7 +418,8 @@ class Game():
 
     def gameOverLoop(self):
         '''Game Over loop that runs when self.gameOver is True. '''
-        self.textCentered('GAME OVER! [C]ontinue or [Q]uit', RED)
+        self.textCentered('GAME OVER!', RED, -50)
+        self.textCentered('[C]ontinue or [Q]uit', y_displace=50)
         pygame.display.update()
 
         # ask the user to Continue or Quit
