@@ -19,15 +19,18 @@ BLOCK_SIZE = 10
 DEF_SNAKE_SIZE = 20
 DEF_APPLE_SIZE = 25
 
+# images
+img_head = pygame.image.load('./assets/snake_head.png')
+img_tail = pygame.image.load('./assets/snake_tail.png')
+
 
 class Snake():
     def __init__(self, game, startCoords, size):
         # size in px of each block (each block will be a square)
+        # will be used to simulate the speed movement too
         self.size = size
         self.growRate = 1
         self.color = GREEN
-        # movement speed in px
-        self.speed = size
         # initial position
         self.startCoords = startCoords
         self.game = game
@@ -43,27 +46,98 @@ class Snake():
         # movement on the axis. will be handled externally
         self.lead_x_change = 0
         self.lead_y_change = 0
+        # direction of movement of the head
+        self.direction = None
         # True if the snake hit itself
         self.autoCollided = False
+        # images for the snake
+        self.head_sprite = img_head
+        self.tail_sprite = img_tail
         # stop the snake
-        self.move('stop')
+        self.changeDirection('stop')
+
+        # the next two calls are used to create placeholder blocks that will
+        # be placed respectively under the tail and the head of the snake
+
+        # head block
+        self.createBlock(self.leadCoords)
 
     def createBlock(self, coordinates):
         ''' Create a block of the snake with in the given coordinates
         and append it to the blocks list ready to be rendered. '''
         block = pygame.Rect(coordinates, (self.size, self.size))
-
         self.blocks.append(block)
 
         return block
+
+    def drawHead(self):
+        if self.direction == 'left':
+            self.head_sprite = self.rotateSprite(img_head, 90)
+        elif self.direction == 'right':
+            self.head_sprite = self.rotateSprite(img_head, 270)
+        elif self.direction == 'up':
+            self.head_sprite = img_head
+        elif self.direction == 'down':
+            self.head_sprite = self.rotateSprite(img_head, 180)
+
+        block = self.blocks[-1]
+        self.game.blit(self.head_sprite, block.topleft)
+
+    def drawTail(self):
+        block = self.blocks[0]
+        # determine the anchor point of the tail sprite relative to the last
+        # block of the snake body so that it's outside of the body blocks but
+        # follows them correctly (apart from rotation)
+        anchor = block.topleft
+
+        if len(self.blocks) == 1:
+            # evaluate rotation around
+            # the only block available at the beginning and rotate accordingly
+            if self.direction == 'up' or self.direction == 'stop':
+                anchor = block.bottomleft
+            elif self.direction == 'down':
+                self.tail_sprite = self.rotateSprite(img_tail, 180)
+                anchor = [block.x, block.y - self.size]
+            elif self.direction == 'left':
+                self.tail_sprite = self.rotateSprite(img_tail, 90)
+                anchor = block.topright
+            elif self.direction == 'right':
+                self.tail_sprite = self.rotateSprite(img_tail, 270)
+                anchor = [block.x - self.size, block.y]
+        else:
+            # if there are more than one block use the last two block to decide
+            # the rotation of the tail sprite. location will be defaulted inside
+            # the tail block, so collision will work
+            prev_block = self.blocks[1]
+
+            if prev_block.y > block.y:    # snake going down
+                self.tail_sprite = self.rotateSprite(img_tail, 180)
+            elif prev_block.y < block.y:  # snake going up
+                self.tail_sprite = img_tail
+            elif prev_block.x > block.x:  # going right
+                self.tail_sprite = self.rotateSprite(img_tail, 270)
+            elif prev_block.x < block.x:  # going left
+                self.tail_sprite = self.rotateSprite(img_tail, 90)
+
+        self.game.blit(self.tail_sprite, anchor)
 
     def draw(self):
         '''Before drawing remove the last block if needed'''
         self.handleLength()
 
-        # draw a rectangle for each block in the list
-        for block in self.blocks:
-            pygame.draw.rect(self.game, self.color, block)
+        # draw a rectangle for each block in the list excluding
+        # the first (the tail) and the last (the head)
+        for block in self.blocks[1:-1]:
+            pygame.draw.rect(self.game, GREEN, block)
+
+        # draw the head of the snake
+        self.drawHead()
+        # draw the tail of the snake
+        self.drawTail()
+
+    def rotateSprite(self, image, angle):
+        ''' Rotate a given pygame.image by <angle> degrees. '''
+        return pygame.transform.rotate(image, angle)
 
     def handleLength(self):
         ''' Remove the last elements of the blocks list
@@ -82,40 +156,48 @@ class Snake():
     def selfCollision(self):
         ''' Detect if the snake collide with itself. '''
 
-        # check if the first block collide with any other block of the snake
-        # if len(self.blocks) > 1:
-        for block in self.blocks[1:]:
-            if self.blocks[0].colliderect(block):
+        # check if the head block collide with any other block of the snake
+        for block in self.blocks[:-1]:
+            if self.blocks[-1].colliderect(block):
                 self.autoCollided = True
 
         return self.autoCollided
 
-    def move(self, direction):
-        ''' change the lead_x_change and lead_y_change values
-        with +- self.speed when requested by the game logic'''
+    def changeDirection(self, direction):
+        ''' Change the direction of movement for the snake head
+        and rotate the head sprite accordingly
+        '''
+        # if, on any case, the snake is moving on the opposite direction, don't
+        # change the direction of movement as it would cause collision and/or
+        # an easier game
         if direction == 'stop':
             self.lead_x_change = 0
             self.lead_y_change = 0
         elif direction == 'left':
-            if self.lead_x_change > 0:
+            if self.direction == 'right':
                 return
-            self.lead_x_change = -self.speed
+            self.lead_x_change = -self.size
             self.lead_y_change = 0
         elif direction == 'right':
-            if self.lead_x_change < 0:
+            if self.direction == 'left':
                 return
-            self.lead_x_change = self.speed
+            self.lead_x_change = self.size
             self.lead_y_change = 0
         elif direction == 'up':
-            if self.lead_y_change > 0:
+            if self.direction == 'down':
                 return
-            self.lead_y_change = -self.speed
+            self.lead_y_change = -self.size
             self.lead_x_change = 0
+            self.tail_sprite = img_tail
         elif direction == 'down':
-            if self.lead_y_change < 0:
+            if self.direction == 'up':
                 return
-            self.lead_y_change = self.speed
+            self.lead_y_change = self.size
             self.lead_x_change = 0
+
+        # if we didn't return sooner store the direction locally
+        # to do other things like animate the sprites etc
+        self.direction = direction
 
     def animate(self):
         ''' Generate a new set of coordinates for the snake head. '''
@@ -194,7 +276,6 @@ class Game():
         self.height = height
         self.clock = pygame.time.Clock()
         self.initFps = fps
-        self.fps = fps
         self.title = title
         self.gameOver = False
         self.gameExit = False
@@ -229,6 +310,7 @@ class Game():
 
         self.snake.init()
         self.apple.create()
+        self.initialized = True
 
     def textCentered(self, message, color):
         '''Print a message on the screen to interact with the player. '''
@@ -267,13 +349,13 @@ class Game():
             # and stop moving in the other axis
             if e.type == pygame.KEYDOWN:
                 if e.key == 97:     # A Key left
-                    self.snake.move('left')
+                    self.snake.changeDirection('left')
                 elif e.key == 100:  # D Key right
-                    self.snake.move('right')
+                    self.snake.changeDirection('right')
                 elif e.key == 119:  # W Key up
-                    self.snake.move('up')
+                    self.snake.changeDirection('up')
                 elif e.key == 115:  # S Key down
-                    self.snake.move('down')
+                    self.snake.changeDirection('down')
                 elif e.key == 19:   # pause
                     self.pause()
                     # TODO: Make pause work instead of causing suicide.
@@ -286,11 +368,11 @@ class Game():
         an apple and so on'''
 
         # screen boundaries interaction
-        snakeHead_x = self.snake.leadCoords[0]
-        snakeHead_y = self.snake.leadCoords[1]
+        snakeHead_x = self.snake.blocks[-1].x
+        snakeHead_y = self.snake.blocks[-1].y
 
-        if snakeHead_x >= self.width or snakeHead_x <= 0 or \
-           snakeHead_y >= self.height or snakeHead_y <= 0:
+        if snakeHead_x + self.snake.size >= self.width or snakeHead_x < 0 or \
+           snakeHead_y + self.snake.size >= self.height or snakeHead_y < 0:
             # You lost!
             self.gameOver = True
 
@@ -317,6 +399,7 @@ class Game():
         self.snake.draw()
 
         # evaluate if the snake collided with its body
+        # TODO: Enable this once the tail is shown correctly
         self.snake.selfCollision()
 
         # if the snake collided with the apple, create a new apple and
@@ -351,6 +434,7 @@ class Game():
 
                 elif e.key == pygame.K_c:
                     self.gameOver = False
+                    self.initialized = False
                     self.run()
 
     def quit(self):
@@ -359,7 +443,8 @@ class Game():
         quit()
 
     def run(self):
-        self.init()
+        if not self.initialized:
+            self.init()
 
         while not self.gameExit:
             while self.gameOver:
@@ -371,7 +456,7 @@ class Game():
         self.quit()
 
     def pause(self):
-        self.snake.move('stop')
+        self.snake.changeDirection('stop')
 
-game = Game()
+game = Game(fps=12)
 game.run()
