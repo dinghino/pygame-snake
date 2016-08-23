@@ -293,7 +293,9 @@ class Game():
         self.initResult = pygame.init()
         self.game = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption(self.title)
-        self.font = pygame.font.SysFont(None, 25)
+        self.smallfont = pygame.font.SysFont('arial', 25)
+        self.mediumfont = pygame.font.SysFont('arial', 50)
+        self.largefont = pygame.font.SysFont('arial', 100)
         # center of the screen, will be our snake starting point
         self.center = [self.width / 2, self.height / 2]
 
@@ -312,9 +314,19 @@ class Game():
         self.apple.create()
         self.initialized = True
 
-    def textCentered(self, message, color=WHITE, y_displace=0):
+    def getText(self, message, color, size):
+        if size == 'small':
+            txt = self.smallfont.render(message, True, color)
+        elif size == 'medium':
+            txt = self.mediumfont.render(message, True, color)
+        elif size == 'large':
+            txt = self.largefont.render(message, True, color)
+
+        return txt
+
+    def textCentered(self, message, color=WHITE, y_displace=0, size='small'):
         '''Print a message on the screen to interact with the player. '''
-        txt = self.font.render(message, True, color)
+        txt = self.getText(message, color, size)
         # get the wrapping rectangle for the text
         txtRect = txt.get_rect()
         # center the text container in the window
@@ -325,7 +337,7 @@ class Game():
 
     def showScore(self):
         text = 'Score: %s' % self.appleEaten
-        screen_text = self.font.render(text, True, WHITE)
+        screen_text = self.getText(text, WHITE, 'small')
         self.game.blit(screen_text, [10, 10])
 
     def increaseSpeed(self):
@@ -419,9 +431,9 @@ class Game():
     def gameOverLoop(self):
         '''Game Over loop that runs when self.gameOver is True. '''
         self.game.fill(BLACK)
-        self.textCentered('GAME OVER!', RED, y_displace=-50)
-        self.textCentered('Your score %s' % self.appleEaten, GREEN)
-        self.textCentered('[C]ontinue or [Q]uit', y_displace=50)
+        self.textCentered('GAME OVER!', RED, -50, 'large')
+        self.textCentered('Your score %s' % self.appleEaten, GREEN, 10)
+        self.textCentered('[C]ontinue or [Q]uit', y_displace=50, size='medium')
         pygame.display.update()
 
         # ask the user to Continue or Quit
