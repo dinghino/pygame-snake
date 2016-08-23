@@ -60,6 +60,7 @@ class Snake():
     def draw(self):
         '''Before drawing remove the last block if needed'''
         self.handleLength()
+
         # draw a rectangle for each block in the list
         for block in self.blocks:
             pygame.draw.rect(self.game, self.color, block)
@@ -123,18 +124,10 @@ class Snake():
         # self.blocks
         # if growRate is greater than one, calculate the other new blocks coord
         # and create them too
-        if self.growRate == 1:
-            new_x = self.leadCoords[0] + self.lead_x_change
-            new_y = self.leadCoords[1] + self.lead_y_change
-            self.leadCoords = [new_x, new_y]
-            self.createBlock(self.leadCoords)
-
-        elif self.growRate > 1:
-            for i in range(self.growRate):
-                new_x = self.leadCoords[0] + self.lead_x_change
-                new_y = self.leadCoords[1] + self.lead_y_change
-                self.createBlock([new_x, new_y])
-                self.leadCoords = [new_x, new_y]
+        new_x = self.leadCoords[0] + self.lead_x_change
+        new_y = self.leadCoords[1] + self.lead_y_change
+        self.leadCoords = [new_x, new_y]
+        self.createBlock(self.leadCoords)
 
 
 class Apple():
